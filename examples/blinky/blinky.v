@@ -13,11 +13,11 @@ module SOC (
 
    reg [4:0] count = 0;
    always @(posedge clk) begin
-      count <= count + 1;//!resetn ? 0 : count + 1;
+      count <= !resetn ? 0 : count + 1;
    end
 
    Clockworks #(
-      .SLOW(21)
+      .SLOW(19)
    )CW(
       .CLK(CLK),
       .RESET(RESET),

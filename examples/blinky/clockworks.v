@@ -14,5 +14,8 @@ module Clockworks #(
     end
     
     assign clk = slowdown[SLOW];
+    
+    assign resetn = !RESET;
 
+    
 endmodule
