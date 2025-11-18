@@ -1,3 +1,5 @@
+`include "clockworks.v"
+
 module SOC (
        input  CLK,        
        input  RESET,      
@@ -6,10 +8,23 @@ module SOC (
        output TXD         
    );
 
+   wire clk;
+   wire resetn;
+
    reg [4:0] count = 0;
-   always @(posedge CLK) begin
-      count <= count + 1;
+   always @(posedge clk) begin
+      count <= count + 1;//!resetn ? 0 : count + 1;
    end
+
+   Clockworks #(
+      .SLOW(21)
+   )CW(
+      .CLK(CLK),
+      .RESET(RESET),
+      .clk(clk),
+      .resetn(resetn)
+   );
+
    assign LEDS = count;
    assign TXD  = 1'b0; // not used for now
 
