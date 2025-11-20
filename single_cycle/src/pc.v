@@ -23,7 +23,3 @@ module inc_pc (
 );
     assign pc_out = 4 + pc_in;
 endmodule
-
-
-
-

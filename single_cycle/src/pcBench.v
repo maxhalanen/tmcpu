@@ -1,3 +1,5 @@
+// Program counter test bench
+
 module bench();
     reg CLK;
     reg RST_N = 1;
@@ -12,8 +14,8 @@ module bench();
     );
 
     inc_pc inc (
-        .pc_in(PC_OUT),
-        .pc_out(NEXT_PC)
+      .pc_in(PC_OUT),
+      .pc_out(NEXT_PC)
     );
 
     initial begin 
