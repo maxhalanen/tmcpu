@@ -48,8 +48,6 @@ module SOC (
       
    end
    
-   reg [31:0] instr;
-
    wire isALUreg  =  (instr[6:0] == 7'b0110011);
    wire isALUimm  =  (instr[6:0] == 7'b0010011);
    wire isBranch  =  (instr[6:0] == 7'b1100011);
@@ -74,17 +72,41 @@ module SOC (
    wire [31:0] Simm={{21{instr[31]}}, instr[30:25],instr[11:7]};
    wire [31:0] Bimm={{20{instr[31]}}, instr[7],instr[30:25],instr[11:8],1'b0};
    wire [31:0] Jimm={{12{instr[31]}}, instr[19:12],instr[20],instr[30:21],1'b0};
+   
+  `ifdef BENCH   
+     always @(posedge clk) begin
+        $display("PC=%0d",PC);
+        case (1'b1)
+    isALUreg: $display(
+          "ALUreg rd=%d rs1=%d rs2=%d funct3=%b",
+                rdId, rs1Id, rs2Id, funct3
+          );
+    isALUimm: $display(
+           "ALUimm rd=%d rs1=%d imm=%0d funct3=%b",
+                 rdId, rs1Id, Iimm, funct3
+          );
+    isBranch: $display("BRANCH");
+    isJAL:    $display("JAL");
+    isJALR:   $display("JALR");
+    isAUIPC:  $display("AUIPC");
+    isLUI:    $display("LUI");	
+    isLoad:   $display("LOAD");
+    isStore:  $display("STORE");
+    isSYSTEM: $display("SYSTEM");
+        endcase 
+     end
+  `endif
 
    always @(posedge clk) begin
   
    if (!resetn) begin
        PC <= 0;
-     end else if (!isSystem) begin
+     end else if (!isSYSTEM) begin
        instr <= MEM[PC];
        PC <= PC+1;
      end
    end
-   assign LEDS = isSYSTEM ? 31 : {PC[0], isALUreg, isALUimm, isStore, isLoad} 
+   assign LEDS = isSYSTEM ? 31 : {PC[0], isALUreg, isALUimm, isStore, isLoad};
 
    Clockworks #(
      .SLOW(19)
@@ -95,7 +117,6 @@ module SOC (
       .resetn(resetn)
    );
 
-   assign LEDS = leds;
    assign TXD  = 1'b0; // not used for now
 
 endmodule
