@@ -1,5 +1,6 @@
 `include "clockworks.v"
 
+
 module SOC (
        input  CLK,        
        input  RESET,      
@@ -14,7 +15,16 @@ module SOC (
    reg [31:0] MEM [0:255]; 
    reg [31:0] PC;       // program counter
    reg [31:0] instr;    // current instruction
-   
+  
+   reg [31:0] RegisterBank [31:0];
+
+   reg [31:0] rs1;
+   reg [31:0] rs2;
+
+   wire [31:0] writeBackData;
+   wire writeBackEn;
+
+  
    initial begin
       PC = 0;
       // add x0, x0, x0
@@ -73,6 +83,45 @@ module SOC (
    wire [31:0] Bimm={{20{instr[31]}}, instr[7],instr[30:25],instr[11:8],1'b0};
    wire [31:0] Jimm={{12{instr[31]}}, instr[19:12],instr[20],instr[30:21],1'b0};
    
+   localparam FETCH_INSTR = 0;
+   localparam FETCH_REGS  = 1;
+   localparam EXECUTE     = 2;
+   reg [1:0] state = FETCH_INSTR;
+   
+
+
+   always @(posedge clk) begin
+      if(!resetn) begin
+	 PC    <= 0;
+	 state <= FETCH_INSTR;
+	 instr <= 32'b0000000_00000_00000_000_00000_0110011; // NOP
+      end else begin
+	 if(writeBackEn && rdId != 0) begin
+	    RegisterBank[rdId] <= writeBackData;
+	 end
+	 
+	 case(state)
+	   FETCH_INSTR: begin
+	      instr <= MEM[PC];
+	      state <= FETCH_REGS;
+	   end
+	   FETCH_REGS: begin
+	      rs1 <= RegisterBank[rs1Id];
+	      rs2 <= RegisterBank[rs2Id];
+	      state <= EXECUTE;
+	   end
+	   EXECUTE: begin
+	      if(!isSYSTEM) begin
+		 PC <= PC + 1;
+	      end
+	      state <= FETCH_INSTR;	      
+`ifdef BENCH      
+	      if(isSYSTEM) $finish();
+`endif      
+	   end
+	 endcase
+      end 
+   end 
   `ifdef BENCH   
      always @(posedge clk) begin
         $display("PC=%0d",PC);
@@ -96,19 +145,12 @@ module SOC (
         endcase 
      end
   `endif
+   assign writeBackData = 0;
+   assign writeBackEn = 0;
 
-   always @(posedge clk) begin
-  
-   if (!resetn) begin
-       PC <= 0;
-     end else if (!isSYSTEM) begin
-       instr <= MEM[PC];
-       PC <= PC+1;
-     end
-   end
-   assign LEDS = isSYSTEM ? 31 : {PC[0], isALUreg, isALUimm, isStore, isLoad};
+   assign LEDS = isSYSTEM ? 31 : (1 << state);
 
-   Clockworks #(
+  Clockworks #(
      .SLOW(19)
    )CW(
       .CLK(CLK),
