@@ -87,8 +87,12 @@ module SOC (
    localparam FETCH_REGS  = 1;
    localparam EXECUTE     = 2;
    reg [1:0] state = FETCH_INSTR;
-   
+  
 
+   // ALU in/out
+   wire [31:0] aluIn1 = rs1;
+   wire [31:0] aluIn2 = isALUreg ? rs1 : Iimm;
+   reg  [31:0] aluOut;
 
    always @(posedge clk) begin
       if(!resetn) begin
