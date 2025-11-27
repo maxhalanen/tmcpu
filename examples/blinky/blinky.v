@@ -74,7 +74,7 @@ module SOC (
    wire [4:0] rs2Id  = instr[24:20];
    wire [4:0] rdId   = instr[11:7];
    wire [2:0] funct3 = instr[14:12];
-   wire [2:0] funct7 = instr[31:25];
+   wire [5:0] funct7 = instr[31:25];
 
    // The 5 immediate formats
    wire [31:0] Uimm={    instr[31],   instr[30:12], {12{1'b0}}};
@@ -93,6 +93,9 @@ module SOC (
    wire [31:0] aluIn1 = rs1;
    wire [31:0] aluIn2 = isALUreg ? rs1 : Iimm;
    reg  [31:0] aluOut;
+
+   wire [4:0] shamt = isALUreg ? rs2[4:0] : instr[24:20]; // shift amount
+
 
    always @(posedge clk) begin
       if(!resetn) begin
